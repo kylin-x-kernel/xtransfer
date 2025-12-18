@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = []
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+
+authors = [
+    "Debin <luodeb@outlook.com>",
+    "Huangshijia <shijia727@outlook.com>",
+]
+homepage = "https://github.com/kylin-x-kernel"
+repository = "https://github.com/kylin-x-kernel/xtransfer"
