@@ -2,11 +2,14 @@ use futures::future::poll_fn;
 use futures::io::{AsyncReadExt, AsyncWriteExt};
 use std::path::PathBuf;
 use tokio::net::UnixStream;
+use tokio_vsock::{VsockStream, VsockAddr};
 use tokio_util::compat::TokioAsyncReadCompatExt;
 use yamux::{Config, Connection, Mode};
 
+#[allow(dead_code)]
 pub enum ClientTarget {
     Unix(PathBuf),
+    Vsock(u32, u32),
 }
 
 pub struct YamuxClient {
@@ -26,6 +29,14 @@ impl YamuxClient {
                     .expect("Failed to connect Unix Socket");
                 self.process_stream(stream.compat(), message).await;
             }
+            ClientTarget::Vsock(cid, port) => {
+                let addr = VsockAddr::new(*cid, *port);
+                let stream = VsockStream::connect(addr)
+                    .await
+                    .expect("Failed to connect Vsock");
+                log::info!("Connecting to Vsock CID: {} Port: {}", cid, port);
+                self.process_stream(stream.compat(), message).await;
+            }
         }
     }
 
@@ -33,8 +44,10 @@ impl YamuxClient {
     where
         T: futures::io::AsyncRead + futures::io::AsyncWrite + Unpin + Send + 'static,
     {
+        log::info!("[Client] Connected to server, preparing to send message...");
         // Initialize Yamux connection
         let config = Config::default();
+
         let mut conn = Connection::new(stream, config, Mode::Client);
 
         // Open a logical stream
