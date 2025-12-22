@@ -5,6 +5,7 @@ use yamux_server::{ServerTarget, YamuxServer};
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
     let target = ServerTarget::Unix(PathBuf::from("/tmp/yamux.sock"));
 
     let server = YamuxServer::new(target);

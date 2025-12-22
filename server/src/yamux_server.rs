@@ -25,7 +25,7 @@ impl YamuxServer {
                     std::fs::remove_file(path).ok();
                 }
                 let listener = UnixListener::bind(path).expect("Failed to bind Unix Socket");
-                println!("Server listening on Unix Socket {:?}", path);
+                log::info!("Server listening on Unix Socket {:?}", path);
                 loop {
                     let (stream, _) = listener.accept().await.expect("Failed to accept");
                     self.handle_connection(stream.compat());
@@ -46,9 +46,9 @@ impl YamuxServer {
                     Some(Ok(mut stream)) => {
                         tokio::spawn(async move {
                             let mut buf = Vec::new();
-                            // 读取直到流关闭 (EOF)
+                            // Read until the stream is closed (EOF)
                             stream.read_to_end(&mut buf).await.expect("Failed to read");
-                            println!("[Server] Received {} bytes", buf.len());
+                            log::info!("[Server] Received {} bytes", buf.len());
 
                             let reply = format!("Ack: received {} bytes", buf.len());
                             stream
@@ -59,7 +59,7 @@ impl YamuxServer {
                         });
                     }
                     Some(Err(e)) => {
-                        eprintln!("Connection error: {}", e);
+                        log::error!("Connection error: {}", e);
                         break;
                     }
                     None => break,

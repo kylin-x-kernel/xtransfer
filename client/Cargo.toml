@@ -12,3 +12,5 @@ yamux = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 futures = { workspace = true }
+env_logger = { workspace = true }
+log = { workspace = true }

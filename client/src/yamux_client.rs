@@ -33,11 +33,11 @@ impl YamuxClient {
     where
         T: futures::io::AsyncRead + futures::io::AsyncWrite + Unpin + Send + 'static,
     {
-        // 初始化 Yamux 连接
+        // Initialize Yamux connection
         let config = Config::default();
         let mut conn = Connection::new(stream, config, Mode::Client);
 
-        // 打开逻辑流 (Stream)
+        // Open a logical stream
         let mut yamux_stream = poll_fn(|cx| conn.poll_new_outbound(cx))
             .await
             .expect("Failed to open stream");
@@ -45,13 +45,13 @@ impl YamuxClient {
         // Spawn the connection driver
         tokio::spawn(async move {
             loop {
-                // poll_next_inbound 会不断读取底层 TCP 数据，解析 Yamux 帧
+                // poll_next_inbound will continuously read underlying data and parse Yamux frames
                 match poll_fn(|cx: &mut std::task::Context<'_>| conn.poll_next_inbound(cx)).await {
                     Some(Ok(_)) => {
                         // We don't expect inbound streams in this example, but we must drive the connection
                     }
                     Some(Err(e)) => {
-                        eprintln!("Connection error: {}", e);
+                        log::error!("Connection error: {}", e);
                         break;
                     }
                     None => break,
@@ -63,7 +63,7 @@ impl YamuxClient {
             .write_all(message.as_bytes())
             .await
             .expect("Failed to send message");
-        // 关闭写端，通知 Server 数据发送完毕
+        // Close the write end to notify the Server that data sending is complete
         yamux_stream.close().await.expect("Failed to close stream");
 
         let mut buf = Vec::new();
@@ -72,6 +72,6 @@ impl YamuxClient {
             .await
             .expect("Failed to read reply");
         let reply = String::from_utf8_lossy(&buf);
-        println!("[Client] Received: {}", reply);
+        log::info!("[Client] Received: {}", reply);
     }
 }
