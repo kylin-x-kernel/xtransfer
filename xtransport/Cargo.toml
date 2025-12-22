@@ -1,0 +1,38 @@
+[package]
+name = "xtransport"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+description = "A no_std compatible reliable transport protocol with fragmentation, retransmission, and CRC32 verification"
+keywords = ["transport", "protocol", "no_std", "reliable", "embedded"]
+categories = ["no-std", "network-programming", "embedded"]
+
+[features]
+default = []
+std = []
+alloc = []
+
+[dependencies]
+# heapless provides fixed-capacity collections for no_std
+heapless = "0.8"
+
+[dev-dependencies]
+
+[[example]]
+name = "basic_usage"
+required-features = ["std"]
+
+[[example]]
+name = "echo"
+required-features = ["std"]
+
+[[example]]
+name = "custom_transport"
+required-features = ["std"]
+
+[[example]]
+name = "fragmentation"
+required-features = ["std"]
