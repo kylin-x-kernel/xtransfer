@@ -40,6 +40,7 @@ pub trait Write {
     }
 }
 
+// Blanket implementations for std types that implement std::io::{Read, Write}
 #[cfg(feature = "std")]
 impl<T: std::io::Read> Read for T {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {

@@ -1,12 +1,23 @@
-use std::net::{TcpListener, TcpStream};
+use std::os::unix::net::UnixListener;
 use std::time::Instant;
 use xtransport::XTransport;
 
 const DATA_SIZE: usize = 100 * 1024 * 1024; // 100 MB
-const LISTEN_ADDR: &str = "127.0.0.1:8888";
+const SOCKET_PATH: &str = "/tmp/xtransfer.sock";
 
-fn handle_client(stream: TcpStream) {
-    println!("Client connected from: {}", stream.peer_addr().unwrap());
+fn main() {
+    env_logger::init();
+
+    // Remove socket file if it exists
+    let _ = std::fs::remove_file(SOCKET_PATH);
+
+    println!("Starting server on {}...", SOCKET_PATH);
+    let listener = UnixListener::bind(SOCKET_PATH).expect("Failed to bind to socket");
+    println!("Server listening on {}", SOCKET_PATH);
+
+    // Accept client connection
+    let (stream, _) = listener.accept().expect("Failed to accept connection");
+    println!("Client connected");
     
     let mut transport = XTransport::new(stream);
 
@@ -37,23 +48,4 @@ fn handle_client(stream: TcpStream) {
     println!("Speed: {:.2} MB/s", speed);
     
     println!("Client handler finished");
-}
-
-fn main() {
-    env_logger::init();
-
-    println!("Starting server on {}...", LISTEN_ADDR);
-    let listener = TcpListener::bind(LISTEN_ADDR).expect("Failed to bind to address");
-    println!("Server listening on {}", LISTEN_ADDR);
-
-    for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                handle_client(stream);
-            }
-            Err(e) => {
-                eprintln!("Connection error: {}", e);
-            }
-        }
-    }
 }

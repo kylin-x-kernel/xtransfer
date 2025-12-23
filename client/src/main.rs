@@ -1,15 +1,15 @@
-use std::net::TcpStream;
+use std::os::unix::net::UnixStream;
 use std::time::Instant;
 use xtransport::XTransport;
 
 const DATA_SIZE: usize = 1000 * 1024 * 1024; // 100 MB
-const SERVER_ADDR: &str = "127.0.0.1:8888";
+const SOCKET_PATH: &str = "/tmp/xtransfer.sock";
 
 fn main() {
     env_logger::init();
 
-    println!("Connecting to server at {}...", SERVER_ADDR);
-    let stream = TcpStream::connect(SERVER_ADDR).expect("Failed to connect to server");
+    println!("Connecting to server at {}...", SOCKET_PATH);
+    let stream = UnixStream::connect(SOCKET_PATH).expect("Failed to connect to server");
     println!("Connected!");
 
     let mut transport = XTransport::new(stream);

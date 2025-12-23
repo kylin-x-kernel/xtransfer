@@ -11,9 +11,9 @@ pub const MESSAGE_HEAD_SIZE: usize = 32;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum PacketType {
-    Data = 0,          // 单包消息
-    MessageHead = 1,   // 多包消息头部
-    MessageData = 2,   // 多包消息数据
+    Data = 0,          // Single packet message
+    MessageHead = 1,   // Multi-packet message header
+    MessageData = 2,   // Multi-packet message data
 }
 
 impl PacketType {
@@ -31,7 +31,7 @@ impl PacketType {
 pub struct PacketHeader {
     pub magic: u32,      // 4 bytes
     pub version: u8,     // 1 byte
-    pub pkt_type: u8,    // 1 byte - 包类型
+    pub pkt_type: u8,    // 1 byte - Packet type
     pub seq: u32,        // 4 bytes
     pub length: u16,     // 2 bytes
     pub crc32: u32,      // 4 bytes
@@ -89,11 +89,11 @@ impl PacketHeader {
 
 #[repr(C)]
 pub struct MessageHead {
-    pub total_length: u64,   // 8 bytes - 消息总长度
-    pub message_id: u64,     // 8 bytes - 消息唯一ID
-    pub packet_count: u32,   // 4 bytes - 数据包总数
-    pub flags: u32,          // 4 bytes - 消息标志位
-    pub reserved: [u8; 8],   // 8 bytes - 保留扩展
+    pub total_length: u64,   // 8 bytes - Total message length
+    pub message_id: u64,     // 8 bytes - Unique message ID
+    pub packet_count: u32,   // 4 bytes - Total packet count
+    pub flags: u32,          // 4 bytes - Message flags
+    pub reserved: [u8; 8],   // 8 bytes - Reserved for extension
 }
 
 impl MessageHead {
