@@ -1,15 +1,43 @@
-mod yamux_client;
-use std::path::PathBuf;
-use yamux_client::{ClientTarget, YamuxClient};
+use std::os::unix::net::UnixStream;
+use std::time::Instant;
+use xtransport::{XTransport, TransportConfig};
+use log::info;
 
-#[tokio::main]
-async fn main() {
+const DATA_SIZE: usize = 1000 * 1024 * 1024; // 100 MB
+const SOCKET_PATH: &str = "/tmp/xtransfer.sock";
+
+fn main() {
     env_logger::init();
-    let target = ClientTarget::Unix(PathBuf::from("/tmp/yamux.sock"));
 
-    let client = YamuxClient::new(target);
-    // Generate 1MB of data
-    let large_message = "a".repeat(1024 * 1024);
-    log::info!("Sending {} bytes...", large_message.len());
-    client.send_message(&large_message).await;
+    info!("Connecting to server at {}...", SOCKET_PATH);
+    let stream = UnixStream::connect(SOCKET_PATH).expect("Failed to connect to server");
+    info!("Connected!");
+
+    let mut transport = XTransport::new(stream, TransportConfig::default());
+
+    // Send 100MB data
+    info!("Sending {} MB of data...", DATA_SIZE / 1024 / 1024);
+    let data = vec![0xAB; DATA_SIZE];
+    
+    let start = Instant::now();
+    transport.send_message(&data).expect("Failed to send message");
+    let elapsed = start.elapsed();
+    let speed = (DATA_SIZE as f64 / 1024.0 / 1024.0) / elapsed.as_secs_f64();
+    
+    info!("=== Send Complete ===");
+    info!("Total sent: {} MB", DATA_SIZE / 1024 / 1024);
+    info!("Time: {:.2} seconds", elapsed.as_secs_f64());
+    info!("Speed: {:.2} MB/s", speed);
+
+    // Receive data from server
+    info!("Receiving data from server...");
+    let start = Instant::now();
+    let recv_data = transport.recv_message().expect("Failed to receive message");
+    let elapsed = start.elapsed();
+    let speed = (recv_data.len() as f64 / 1024.0 / 1024.0) / elapsed.as_secs_f64();
+    
+    info!("=== Receive Complete ===");
+    info!("Total received: {} MB", recv_data.len() / 1024 / 1024);
+    info!("Time: {:.2} seconds", elapsed.as_secs_f64());
+    info!("Speed: {:.2} MB/s", speed);
 }
