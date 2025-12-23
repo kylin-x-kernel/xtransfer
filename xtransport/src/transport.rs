@@ -1,8 +1,8 @@
 use crate::{
-    config::TransportConfig,
+    config::{TransportConfig, HEADER_SIZE, MESSAGE_HEAD_SIZE},
     error::{Error, ErrorKind},
     io::{Read, Write},
-    protocol::{Packet, PacketHeader, PacketType, MessageHead, HEADER_SIZE, MESSAGE_HEAD_SIZE},
+    protocol::{Packet, PacketHeader, PacketType, MessageHead},
     Result,
 };
 use alloc::vec::Vec;
