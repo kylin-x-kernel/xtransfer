@@ -1,9 +1,9 @@
+use log::info;
 use std::os::unix::net::UnixListener;
 use std::time::Instant;
 use xtransport::{TransportConfig, XTransport};
-use log::info;
 
-const DATA_SIZE: usize = 100 * 1024 * 1024; // 100 MB
+const DATA_SIZE: usize = 200 * 1000 * 1024; // 200 MB
 const SOCKET_PATH: &str = "/tmp/xtransfer.sock";
 
 fn main() {
@@ -22,7 +22,9 @@ fn main() {
 
     let mut transport = XTransport::new(
         stream,
-        TransportConfig::default().with_max_frame_size(2048),
+        TransportConfig::default()
+            .with_max_frame_size(2048)
+            .with_ack(false),
     );
 
     // Receive data from client
