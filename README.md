@@ -1,5 +1,8 @@
 # XTransport Protocol
 
+cargo build -p server--release --target aarch64-unknown-linux-musl
+
+
 A reliable transport protocol implementation with `no_std` + `alloc` support.
 
 ## Protocol Design

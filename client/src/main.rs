@@ -1,19 +1,30 @@
 use std::os::unix::net::UnixStream;
+use vsock::{VsockAddr, VsockStream};
 use std::time::Instant;
 use xtransport::{XTransport, TransportConfig};
 use log::info;
 
-const DATA_SIZE: usize = 1000 * 1024 * 1024; // 100 MB
+const DATA_SIZE: usize = 100 * 1024 * 1024; // 100 MB
 const SOCKET_PATH: &str = "/tmp/xtransfer.sock";
+
+const DEFAULT_SERVER_CID: u32 = 3;       // 默认2， qemu用103， pvm用3
+const DEFAULT_SERVER_PORT: u32 = 1234;
 
 fn main() {
     env_logger::init();
 
+    // method 1  unix
+    // info!("Connecting to server at {}...", SOCKET_PATH);
+    // let stream = UnixStream::connect(SOCKET_PATH).expect("Failed to connect to server");
+    // info!("Connected!");
+
+    // method 2  vsock
     info!("Connecting to server at {}...", SOCKET_PATH);
-    let stream = UnixStream::connect(SOCKET_PATH).expect("Failed to connect to server");
+    let addr = VsockAddr::new(DEFAULT_SERVER_CID, DEFAULT_SERVER_PORT);
+    let stream = VsockStream::connect(&addr).expect("Failed to connect to server");
     info!("Connected!");
 
-    let mut transport = XTransport::new(stream, TransportConfig::default());
+    let mut transport = XTransport::new(stream, TransportConfig::default().with_max_frame_size(1000));
 
     // Send 100MB data
     info!("Sending {} MB of data...", DATA_SIZE / 1024 / 1024);
