@@ -1,5 +1,6 @@
 use log::info;
 use std::os::unix::net::UnixListener;
+use vsock::{VsockAddr, VsockListener, VsockStream, VMADDR_CID_ANY};
 use std::time::Instant;
 use xtransport::{TransportConfig, XTransport};
 
@@ -7,16 +8,23 @@ const DATA_SIZE: usize = 200 * 1000 * 1024; // 200 MB
 const SOCKET_PATH: &str = "/tmp/xtransfer.sock";
 
 fn main() {
-    env_logger::init();
+    // env_logger::init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("trace")).init();
 
+    // method 1 unix
     // Remove socket file if it exists
-    let _ = std::fs::remove_file(SOCKET_PATH);
+    // let _ = std::fs::remove_file(SOCKET_PATH);
+    // info!("Starting server on {}...", SOCKET_PATH);
+    // let listener = UnixListener::bind(SOCKET_PATH).expect("Failed to bind to socket");
+    // info!("Server listening on {}", SOCKET_PATH);
+    // // Accept client connection
+    // let (stream, _) = listener.accept().expect("Failed to accept connection");
+    // info!("Client connected");
 
-    info!("Starting server on {}...", SOCKET_PATH);
-    let listener = UnixListener::bind(SOCKET_PATH).expect("Failed to bind to socket");
-    info!("Server listening on {}", SOCKET_PATH);
-
-    // Accept client connection
+    // method 2 vsock
+    let addr = VsockAddr::new(VMADDR_CID_ANY, 1234);
+    let listener = VsockListener::bind(&addr).expect("Failed to bind to vsock");
+    info!("Server listening on {:?}", addr);
     let (stream, _) = listener.accept().expect("Failed to accept connection");
     info!("Client connected");
 

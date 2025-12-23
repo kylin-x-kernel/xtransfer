@@ -8,3 +8,4 @@ license.workspace = true
 xtransport = { path = "../xtransport", features = ["std"] }
 env_logger.workspace = true
 log.workspace = true
+vsock.workspace = true
