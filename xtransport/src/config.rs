@@ -3,7 +3,7 @@ pub const MAGIC: u32 = 0x58545250; // "XTRP"
 pub const VERSION: u8 = 0x01;
 pub const HEADER_SIZE: usize = 16;
 pub const MESSAGE_HEAD_SIZE: usize = 32;
-pub const DEFAULT_MAX_PAYLOAD_SIZE: usize = 65536 - HEADER_SIZE;
+const DEFAULT_MAX_FRAME_SIZE: usize = 4096; // 4KB
 
 pub struct TransportConfig {
     pub max_payload_size: usize,
@@ -12,7 +12,7 @@ pub struct TransportConfig {
 impl TransportConfig {
     pub fn new() -> Self {
         Self {
-            max_payload_size: DEFAULT_MAX_PAYLOAD_SIZE,
+            max_payload_size: DEFAULT_MAX_FRAME_SIZE - HEADER_SIZE,
         }
     }
 
