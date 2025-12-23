@@ -9,6 +9,7 @@ pub enum PacketType {
     Data = 0,          // Single packet message
     MessageHead = 1,   // Multi-packet message header
     MessageData = 2,   // Multi-packet message data
+    Ack = 3,           // Acknowledgment packet
 }
 
 impl PacketType {
@@ -17,6 +18,7 @@ impl PacketType {
             0 => Some(PacketType::Data),
             1 => Some(PacketType::MessageHead),
             2 => Some(PacketType::MessageData),
+            3 => Some(PacketType::Ack),
             _ => None,
         }
     }
