@@ -1,7 +1,8 @@
 use crate::{
+    config::TransportConfig,
     error::{Error, ErrorKind},
     io::{Read, Write},
-    protocol::{Packet, PacketHeader, PacketType, MessageHead, HEADER_SIZE, MAX_PAYLOAD_SIZE, MESSAGE_HEAD_SIZE},
+    protocol::{Packet, PacketHeader, PacketType, MessageHead, HEADER_SIZE, MESSAGE_HEAD_SIZE},
     Result,
 };
 use alloc::vec::Vec;
@@ -14,10 +15,11 @@ pub struct XTransport<T> {
     recv_buffer: Vec<u8>,
     recv_pos: usize,
     recv_available: usize,
+    config: TransportConfig,
 }
 
 impl<T: Read + Write> XTransport<T> {
-    pub fn new(inner: T) -> Self {
+    pub fn new(inner: T, config: TransportConfig) -> Self {
         XTransport {
             inner,
             send_seq: 0,
@@ -26,6 +28,7 @@ impl<T: Read + Write> XTransport<T> {
             recv_buffer: Vec::new(),
             recv_pos: 0,
             recv_available: 0,
+            config,
         }
     }
 
@@ -72,7 +75,7 @@ impl<T: Read + Write> XTransport<T> {
 
     /// Send a complete message (automatically handles fragmentation)
     pub fn send_message(&mut self, data: &[u8]) -> Result<()> {
-        if data.len() <= MAX_PAYLOAD_SIZE {
+        if data.len() <= self.config.max_payload_size {
             // Small message: single Data packet
             self.send_packet(PacketType::Data, data)?;
             log::debug!("Sent single-packet message: {} bytes", data.len());
@@ -81,7 +84,7 @@ impl<T: Read + Write> XTransport<T> {
             let message_id = self.next_message_id;
             self.next_message_id = self.next_message_id.wrapping_add(1);
             
-            let packet_count = ((data.len() + MAX_PAYLOAD_SIZE - 1) / MAX_PAYLOAD_SIZE) as u32;
+            let packet_count = ((data.len() + self.config.max_payload_size - 1) / self.config.max_payload_size) as u32;
             
             // Send MessageHead
             let head = MessageHead::new(data.len() as u64, message_id, packet_count);
@@ -91,7 +94,7 @@ impl<T: Read + Write> XTransport<T> {
                        message_id, data.len(), packet_count);
             
             // Send MessageData packets
-            for chunk in data.chunks(MAX_PAYLOAD_SIZE) {
+            for chunk in data.chunks(self.config.max_payload_size) {
                 self.send_packet(PacketType::MessageData, chunk)?;
             }
             
@@ -216,8 +219,8 @@ impl<T: Read + Write> Write for XTransport<T> {
             return Ok(0);
         }
 
-        // Send first chunk (up to MAX_PAYLOAD_SIZE)
-        let to_send = core::cmp::min(buf.len(), MAX_PAYLOAD_SIZE);
+        // Send first chunk (up to max_payload_size)
+        let to_send = core::cmp::min(buf.len(), self.config.max_payload_size);
         self.send_packet(PacketType::Data, &buf[..to_send])?;
 
         Ok(to_send)

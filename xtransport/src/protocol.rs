@@ -5,7 +5,7 @@ use crc32fast::Hasher;
 pub const MAGIC: u32 = 0x58545250; // "XTRP"
 pub const VERSION: u8 = 0x01;
 pub const HEADER_SIZE: usize = 16;
-pub const MAX_PAYLOAD_SIZE: usize = 65536 - HEADER_SIZE;
+pub const DEFAULT_MAX_PAYLOAD_SIZE: usize = 65536 - HEADER_SIZE;
 pub const MESSAGE_HEAD_SIZE: usize = 32;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
