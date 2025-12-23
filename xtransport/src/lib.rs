@@ -10,7 +10,7 @@ pub mod transport;
 
 pub use error::{Error, Result};
 pub use io::{Read, Write};
-pub use config::TransportConfig;
+pub use config::{TransportConfig, MAGIC, VERSION, HEADER_SIZE, MESSAGE_HEAD_SIZE, DEFAULT_MAX_PAYLOAD_SIZE};
 pub use transport::XTransport;
 
 

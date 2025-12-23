@@ -22,7 +22,7 @@ fn main() {
 
     let mut transport = XTransport::new(
         stream,
-        TransportConfig::default().with_max_payload_size(2048),
+        TransportConfig::default().with_max_frame_size(2048),
     );
 
     // Receive data from client
