@@ -1,0 +1,15 @@
+[package]
+name = "xtransport"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "A no_std compatible reliable transport protocol with fragmentation, retransmission, reordering and CRC32 checksum"
+
+[features]
+default = []
+
+[dependencies]
+log = "0.4"
+
+[dev-dependencies]
