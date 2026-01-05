@@ -1,14 +1,13 @@
 use log::info;
-use std::os::unix::net::UnixListener;
-use vsock::{VsockAddr, VsockListener, VsockStream, VMADDR_CID_ANY};
+// use std::os::unix::net::UnixListener;
+use vsock::{VsockAddr, VsockListener, VMADDR_CID_ANY};
 use std::time::Instant;
 use xtransport::{TransportConfig, XTransport};
 
-const DATA_SIZE: usize = 200 * 1000 * 1024; // 200 MB
-const SOCKET_PATH: &str = "/tmp/xtransfer.sock";
+const DATA_SIZE: usize = 200 * 1024; // 200 KB
+// const SOCKET_PATH: &str = "/tmp/xtransfer.sock";
 
 fn main() {
-    // env_logger::init();
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("trace")).init();
 
     // method 1 unix
@@ -31,7 +30,7 @@ fn main() {
     let mut transport = XTransport::new(
         stream,
         TransportConfig::default()
-            .with_max_frame_size(2048)
+            .with_max_frame_size(1024)
             .with_ack(false),
     );
 
@@ -39,16 +38,25 @@ fn main() {
     info!("Receiving data from client...");
     let start = Instant::now();
     let recv_data = transport.recv_message().expect("Failed to receive message");
+    
+    let data = vec![0xAB; 10 * 1024 * 1024];
+    // 判断是否全等
+    if recv_data == data {
+        info!("Data matches exactly");
+    } else {
+        info!("Data does not match");
+    }
+    
     let elapsed = start.elapsed();
-    let speed = (recv_data.len() as f64 / 1024.0 / 1024.0) / elapsed.as_secs_f64();
+    let speed = (recv_data.len() as f64 / 1024.0) / elapsed.as_secs_f64();
 
     info!("=== Receive Complete ===");
-    info!("Total received: {} MB", recv_data.len() / 1024 / 1024);
+    info!("Total received: {} KB", recv_data.len() / 1024);
     info!("Time: {:.2} seconds", elapsed.as_secs_f64());
-    info!("Speed: {:.2} MB/s", speed);
+    info!("Speed: {:.2} KB/s", speed);
 
-    // Send 100MB data back
-    info!("Sending {} MB of data back...", DATA_SIZE / 1024 / 1024);
+    // Send 100KB data back
+    info!("Sending {} KB of data back...", DATA_SIZE / 1024);
     let data = vec![0xCD; DATA_SIZE];
 
     let start = Instant::now();
@@ -56,12 +64,15 @@ fn main() {
         .send_message(&data)
         .expect("Failed to send message");
     let elapsed = start.elapsed();
-    let speed = (DATA_SIZE as f64 / 1024.0 / 1024.0) / elapsed.as_secs_f64();
+    let speed = (DATA_SIZE as f64 / 1024.0) / elapsed.as_secs_f64();
 
     info!("=== Send Complete ===");
-    info!("Total sent: {} MB", DATA_SIZE / 1024 / 1024);
+    info!("Total sent: {} KB", DATA_SIZE / 1024);
     info!("Time: {:.2} seconds", elapsed.as_secs_f64());
-    info!("Speed: {:.2} MB/s", speed);
+    info!("Speed: {:.2} KB/s", speed);
 
     info!("Client handler finished");
 }
+
+
+
