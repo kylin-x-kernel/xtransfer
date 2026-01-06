@@ -5,7 +5,12 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-xtransport = { path = "../xtransport", features = ["std"] }
+# xtransport = { path = "../xtransport", features = ["std"] }
 env_logger.workspace = true
 log.workspace = true
-vsock.workspace = true
+# vsock.workspace = true
+yamux.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tokio-vsock.workspace = true
+futures.workspace = true

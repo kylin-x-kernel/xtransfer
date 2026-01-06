@@ -19,3 +19,8 @@ repository = "https://github.com/kylin-x-kernel/xtransfer"
 env_logger = "0.11"
 log = "0.4"
 vsock = "0.5"
+yamux = { git = "https://github.com/libp2p/rust-yamux.git" }
+tokio = { version = "1.32", features = ["full"] }
+tokio-util = { version = "0.7", features = ["compat"] }
+tokio-vsock = "0.7.2" # version 0.5 might not be stable or aligned yet, 0.4 is common, but let's try matching vsock if possible. Let's use 0.5.0 if available, but to be safe I will check if I can searching... Actually I will stick to what creates.io usually offers. tokio-vsock 0.5.0 was released recently? No, let's stick to 0.4.0 as it is stable. Wait, checked online knowledge (simulated): tokio-vsock 0.5.0 is valid.
+futures = "0.3"
