@@ -1,4 +1,3 @@
-
 use futures::future::poll_fn;
 use futures::io::{AsyncRead, AsyncWrite};
 use futures::{AsyncReadExt, AsyncWriteExt};
@@ -57,12 +56,12 @@ impl TransServer {
             ServerTarget::Vsock { cid, port } => {
                 let listener = VsockListener::bind(VsockAddr::new(*cid, *port)).expect("Failed to bind Vsock Socket");
                 info!("Server listening on Vsock CID:{} Port:{}", cid, port);
-                loop {
+                
                     let (stream, addr) = listener.accept().await.expect("Failed to accept");
                     info!("Accepted Vsock connection from {:?}", addr);
-                    tokio::spawn(Self::handle_connection(stream.compat()));
+                    Self::handle_connection(stream.compat()).await;
                     info!("Spawned task to handle Vsock connection");
-                }
+                
             }
         }
     }
@@ -147,6 +146,8 @@ impl TransServer {
         info!("[Yamux] Reply sent and stream closed");
 
         Ok(())
+        // // Force exit after sending reply (for testing purposes)
+        // std::process::exit(0);
     }
 
 
