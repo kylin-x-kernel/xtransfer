@@ -4,7 +4,7 @@ use vsock::{VsockAddr, VsockStream};
 use std::time::Instant;
 use xtransport::{TransportConfig, XTransport};
 
-const DATA_SIZE: usize =  2 * 1024; // 1 MB
+const DATA_SIZE: usize = 100 * 1024 * 1024; // 100 MB
 const SOCKET_PATH: &str = "/tmp/xtransfer.sock";
 
 const DEFAULT_SERVER_CID: u32 = 3;       // 默认2， qemu用103， pvm用3
@@ -24,7 +24,7 @@ fn main() {
     let stream = VsockStream::connect(&addr).expect("Failed to connect to server");
     info!("Connected!");
 
-    let mut transport = XTransport::new(stream, TransportConfig::default().with_ack(false));
+    let mut transport = XTransport::new(stream, TransportConfig::default().with_max_frame_size(1000));
 
     // Send 100MB data
     info!("Sending {} MB of data...", DATA_SIZE / 1024 / 1024);
