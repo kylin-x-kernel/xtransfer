@@ -4,6 +4,8 @@ mod trans_server;
 use crate::trans_server::{ServerTarget, TransServer};
 use tokio_vsock::VMADDR_CID_ANY;
 
+const DATA_SIZE: usize =  100 * 1024; // 2 MB
+
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {

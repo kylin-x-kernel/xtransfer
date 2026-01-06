@@ -4,10 +4,14 @@ use futures::io::{AsyncRead, AsyncWrite};
 use futures::{AsyncReadExt, AsyncWriteExt};
 use std::net::SocketAddr;
 use std::path::PathBuf;
+use std::time::Instant;
 use tokio::net::{TcpListener, UnixListener};
 use tokio_util::compat::TokioAsyncReadCompatExt;
 use tokio_vsock::{VsockAddr, VsockListener};
 use yamux::{Config, Connection, Mode};
+use log::*;
+
+use crate::DATA_SIZE;
 
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -33,31 +37,31 @@ impl TransServer {
                     let _ = std::fs::remove_file(path);
                 }
                 let listener = UnixListener::bind(path).expect("Failed to bind Unix Socket");
-                log::info!("Server listening on Unix Socket {:?}", path);
+                info!("Server listening on Unix Socket {:?}", path);
                 loop {
                     let (stream, _) = listener.accept().await.expect("Failed to accept");
-                    log::info!("Accepted Unix connection");
+                    info!("Accepted Unix connection");
                     tokio::spawn(Self::handle_connection(stream.compat()));
-                    log::info!("Spawned task to handle Unix connection");
+                    info!("Spawned task to handle Unix connection");
                 }
             }
             ServerTarget::Tcp(addr) => {
                 let listener = TcpListener::bind(addr).await.expect("Failed to bind TCP Socket");
-                log::info!("Server listening on TCP {:?}", addr);
+                info!("Server listening on TCP {:?}", addr);
                 loop {
                     let (stream, peer) = listener.accept().await.expect("Failed to accept");
-                    log::info!("Accepted TCP connection from {:?}", peer);
+                    info!("Accepted TCP connection from {:?}", peer);
                     tokio::spawn(Self::handle_connection(stream.compat()));
                 }
             }
             ServerTarget::Vsock { cid, port } => {
                 let listener = VsockListener::bind(VsockAddr::new(*cid, *port)).expect("Failed to bind Vsock Socket");
-                log::info!("Server listening on Vsock CID:{} Port:{}", cid, port);
+                info!("Server listening on Vsock CID:{} Port:{}", cid, port);
                 loop {
                     let (stream, addr) = listener.accept().await.expect("Failed to accept");
-                    log::info!("Accepted Vsock connection from {:?}", addr);
+                    info!("Accepted Vsock connection from {:?}", addr);
                     tokio::spawn(Self::handle_connection(stream.compat()));
-                    log::info!("Spawned task to handle Vsock connection");
+                    info!("Spawned task to handle Vsock connection");
                 }
             }
         }
@@ -69,7 +73,7 @@ impl TransServer {
     where
         T: AsyncRead + AsyncWrite + Unpin + Send + 'static,
     {
-        log::info!("Starting Yamux handshake...");
+        info!("Starting Yamux handshake...");
         let config = Config::default();
         let mut conn = Connection::new(stream, config, Mode::Server);
 
@@ -80,23 +84,23 @@ impl TransServer {
                     // Spawn a new task to handle this specific logical stream independently
                     tokio::spawn(async move {
                         if let Err(e) = Self::handle_stream(stream).await {
-                            log::error!("[Yamux] Stream error: {}", e);
+                            error!("[Yamux] Stream error: {}", e);
                         }
                     });
                 }
                 Some(Err(e)) => {
-                    log::error!("Connection error: {}", e);
+                    error!("Connection error: {}", e);
                     break;
                 }
                 None => {
-                    log::info!("Connection closed by remote");
+                    info!("Connection closed by remote");
                     break;
                 }
             }
-            log::info!("Yamux connection polling for new inbound streams...");
+            info!("Yamux connection polling for new inbound streams...");
         }
 
-        log::info!("Yamux connection handler exiting");
+        info!("Yamux connection handler exiting");
     }
 
     /// Handles a single logical Yamux stream.
@@ -105,31 +109,43 @@ impl TransServer {
     where
         S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
     {
-        log::info!("[Yamux] New stream opened");
+        info!("[Yamux] New stream opened");
         let mut buf = Vec::new();
 
         // Read all data until EOF
-        match stream.read_to_end(&mut buf).await {
-            Ok(n) => {
-                if n == 0 {
-                    log::info!("[Yamux] Stream closed empty");
-                    return Ok(());
-                }
+        let start = Instant::now();
+        let n = stream.read_to_end(&mut buf).await.expect("Failed to read data");
+        let elapsed = start.elapsed();
+        let speed = (n as f64 / 1024.0) / elapsed.as_secs_f64();
+        info!("=== Receive Complete ===");
+        info!("Total received: {} KB", n / 1024);
+        info!("Time: {:.2} seconds", elapsed.as_secs_f64());
+        info!("Speed: {:.2} KB/s", speed);
+        info!("");
+        info!("");
 
-                let msg = String::from_utf8_lossy(&buf);
-                log::info!("[Yamux] Received: {}", msg);
-
-                // Send reply
-                let reply = format!("Ack: {}", msg);
-                stream.write_all(reply.as_bytes()).await?;
-                stream.close().await?;
-
-                log::info!("[Yamux] Reply sent and stream closed");
-            }
-            Err(e) => {
-                return Err(e);
-            }
+        if n == 0 {
+            info!("[Yamux] Stream closed empty");
+            return Ok(());
         }
+
+        // Send reply
+        let start = Instant::now();
+        let reply: Vec<u8> = vec![0xAB; DATA_SIZE];
+        stream.write_all(&reply).await?;
+        stream.flush().await?;
+        stream.close().await?;
+        let elapsed = start.elapsed();
+        let speed = (DATA_SIZE as f64 / 1024.0) / elapsed.as_secs_f64();
+        info!("=== Send Complete ===");
+        info!("Total sent: {} KB", DATA_SIZE / 1024);
+        info!("Time: {:.2} seconds", elapsed.as_secs_f64());
+        info!("Speed: {:.2} KB/s", speed);
+        info!("");
+        info!("");
+
+        info!("[Yamux] Reply sent and stream closed");
+
         Ok(())
     }
 
