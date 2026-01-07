@@ -11,7 +11,7 @@ const DEFAULT_SERVER_CID: u32 = 103;       // 默认2， qemu用103， pvm用3
 const DEFAULT_SERVER_PORT: u32 = 1234;
 
 fn main() {
-    env_logger::init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     // method 1  unix
     // info!("Connecting to server at {}...", SOCKET_PATH);

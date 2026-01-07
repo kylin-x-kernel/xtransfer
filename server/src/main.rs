@@ -8,7 +8,7 @@ const DATA_SIZE: usize = 200 * 1024; // 200 KB
 // const SOCKET_PATH: &str = "/tmp/xtransfer.sock";
 
 fn main() {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("trace")).init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     // method 1 unix
     // Remove socket file if it exists
